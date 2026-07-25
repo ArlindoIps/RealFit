@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../treinos/treinos_screen.dart';
 
 class DiarioScreen extends StatefulWidget {
   const DiarioScreen({super.key});
@@ -12,6 +14,7 @@ class _DiarioScreenState extends State<DiarioScreen> {
   String energiaSelecionada = '';
   String tempoSelecionado = '';
   String humorSelecionado = '';
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -125,13 +128,34 @@ class _DiarioScreenState extends State<DiarioScreen> {
               const SizedBox(height: 48),
 
               // Botão de Ação
-              SizedBox(
+             SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Aqui vamos colocar a lógica para gerar o treino e gravar no Firebase!
-                    print('Energia: $energiaSelecionada, Tempo: $tempoSelecionado, Humor: $humorSelecionado');
-                  },
+                  onPressed: (isLoading || energiaSelecionada.isEmpty || tempoSelecionado.isEmpty) 
+                      ? null // Desativa o botão se não tiver tudo preenchido
+                      : () async {
+                          setState(() {
+                            isLoading = true;
+                          });
+
+                          // 1. Vai à API buscar os exercícios!
+                          final listaExercicios = await ApiService.obterTreino(energiaSelecionada, tempoSelecionado);
+
+                          setState(() {
+                            isLoading = false;
+                          });
+
+                          // 2. Navega para o ecrã de Treinos, passando a lista gerada
+                          if (mounted) {
+                            // Mais tarde substituimos isto para mudar de aba, mas para já forçamos a navegação
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TreinosScreen(exerciciosGerados: listaExercicios),
+                              ),
+                            );
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4DD0E1), // Ciano
                     foregroundColor: Colors.black,
@@ -141,10 +165,16 @@ class _DiarioScreenState extends State<DiarioScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Descobrir Treino de hoje >',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                        )
+                      : const Text(
+                          'Descobrir Treino de hoje >',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],

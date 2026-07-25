@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 class TreinosScreen extends StatelessWidget {
-  const TreinosScreen({super.key});
+  // A variável que vai receber a lista da API
+  final List<Map<String, dynamic>>? exerciciosGerados;
+
+  // Atualizamos o construtor para aceitar a variável
+  const TreinosScreen({super.key, this.exerciciosGerados});
 
   @override
   Widget build(BuildContext context) {
@@ -45,33 +49,53 @@ class TreinosScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           
-          // Lista de exercícios
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9F9F9),
-              borderRadius: BorderRadius.circular(12.0),
+          // A LÓGICA DINÂMICA: Verifica se há exercícios vindos da API
+          if (exerciciosGerados == null || exerciciosGerados!.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F9F9),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: const Text(
+                'Ainda não definiste o teu treino.\nVai à aba Diário e responde às perguntas para gerarmos o plano perfeito para ti hoje!', 
+                style: TextStyle(height: 1.5, color: Colors.black54),
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(16.0),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9F9F9),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                // Faz um ciclo (map) pela lista e desenha os textos
+                children: exerciciosGerados!.map((ex) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: Text(
+                      '${ex['nome']} - 3 x 10', // Puxa o nome da API e mete as séries hardcoded
+                      style: const TextStyle(height: 1.5),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Flexões - 3 x 10', style: TextStyle(height: 1.8)),
-                Text('Burpees - 2 x 8', style: TextStyle(height: 1.8)),
-                Text('Agachamentos - 4 x 15', style: TextStyle(height: 1.8)),
-                Text('Lunges - 3 x 10', style: TextStyle(height: 1.8)),
-                Text('Abdominais - 4 x 20', style: TextStyle(height: 1.8)),
-              ],
-            ),
-          ),
+            
           const SizedBox(height: 24),
           
           // Botão Iniciar Treino
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // Ação para iniciar o treino
-              },
+              // Só ativa o botão se houver exercícios!
+              onPressed: (exerciciosGerados == null || exerciciosGerados!.isEmpty) 
+                  ? null 
+                  : () {
+                      // Mais logo colocamos aqui a navegação para o ecrã de "Treino a Correr"
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB2EBF2), // Cor ciano clara
                 foregroundColor: Colors.black, // Cor do texto
@@ -93,9 +117,7 @@ class TreinosScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {
-                // Ação para descarregar
-              },
+              onPressed: () {},
               icon: const Icon(Icons.download, size: 20, color: Colors.black87),
               label: const Text(
                 'Descarregar',
@@ -129,9 +151,7 @@ class TreinosScreen extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.black54),
-        onTap: () {
-          // Navegação para os outros ecrãs
-        },
+        onTap: () {},
       ),
     );
   }
