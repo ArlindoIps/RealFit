@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 // Importa os ecrãs que cada um vai desenvolver
 import 'Login/Registo/login_screen.dart';
 import 'treinos/treinos_screen.dart';
-import 'social/amigos_screen.dart';
 
 void main() {
   runApp(const RealFitApp());
@@ -21,7 +20,7 @@ class RealFitApp extends StatelessWidget {
       ),
       // Para já, arranca logo no ecrã principal com as abas.
       // Mais tarde, o Colega 1 muda isto para arrancar no LoginScreen!
-      home: const MainNavegacao(), 
+      home: const MainNavegacao(),
     );
   }
 }
@@ -39,7 +38,6 @@ class _MainNavegacaoState extends State<MainNavegacao> {
   // Lista dos ecrãs de cada colega
   final List<Widget> _ecras = [
     const TreinosScreen(), // Aba 0
-    const AmigosScreen(),  // Aba 1
     const Center(child: Text("Perfil/Estatísticas Aqui")), // Aba 2
   ];
 
@@ -59,14 +57,8 @@ class _MainNavegacaoState extends State<MainNavegacao> {
             icon: Icon(Icons.fitness_center),
             label: 'Treinos',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Amigos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Amigos'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );
