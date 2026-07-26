@@ -1,40 +1,36 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../treinos/treinos_screen.dart';
 
 class DiarioScreen extends StatefulWidget {
-  const DiarioScreen({super.key});
+  // AVISO: Agora recebe a função do main.dart para mudar de aba!
+  final Function(List<Map<String, dynamic>>) onTreinoGerado;
+
+  const DiarioScreen({super.key, required this.onTreinoGerado});
 
   @override
   State<DiarioScreen> createState() => _DiarioScreenState();
 }
 
 class _DiarioScreenState extends State<DiarioScreen> {
-  // Variáveis para guardar as escolhas do utilizador
   String energiaSelecionada = '';
   String tempoSelecionado = '';
   String humorSelecionado = '';
-  bool isLoading = false;
+  bool _estaACaregar = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
-        child: SingleChildScrollView( // Permite fazer scroll se o ecrã for pequeno
+        child: SingleChildScrollView( 
           padding: const EdgeInsets.all(24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              // Cabeçalho
               const Text(
-                'Bom dia, Arlindo!', // Mais tarde substituímos pelo nome real da base de dados
-                style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                'Bom dia, Arlindo!',
+                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -43,121 +39,64 @@ class _DiarioScreenState extends State<DiarioScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Pergunta 1: Energia
               _buildPerguntaTitulo('Qual o teu nível de energia?'),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildOpcao(
-                    texto: 'Baixa 🔋',
-                    grupo: 'energia',
-                    valor: 'baixa',
-                    selecionado: energiaSelecionada == 'baixa',
-                  ),
-                  _buildOpcao(
-                    texto: 'Moderada ⚡',
-                    grupo: 'energia',
-                    valor: 'moderada',
-                    selecionado: energiaSelecionada == 'moderada',
-                  ),
-                  _buildOpcao(
-                    texto: 'Alta 🔥',
-                    grupo: 'energia',
-                    valor: 'alta',
-                    selecionado: energiaSelecionada == 'alta',
-                  ),
+                  _buildOpcao('Baixa 🔋', 'energia', 'baixa', energiaSelecionada == 'baixa'),
+                  _buildOpcao('Moderada ⚡', 'energia', 'moderada', energiaSelecionada == 'moderada'),
+                  _buildOpcao('Alta 🔥', 'energia', 'alta', energiaSelecionada == 'alta'),
                 ],
               ),
               const SizedBox(height: 32),
 
-              // Pergunta 2: Tempo
               _buildPerguntaTitulo('Quanto tempo tens disponível?'),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildOpcao(
-                    texto: '10 - 20 min',
-                    grupo: 'tempo',
-                    valor: 'curto',
-                    selecionado: tempoSelecionado == 'curto',
-                  ),
-                  _buildOpcao(
-                    texto: '20 - 40 min',
-                    grupo: 'tempo',
-                    valor: 'medio',
-                    selecionado: tempoSelecionado == 'medio',
-                  ),
-                  _buildOpcao(
-                    texto: '40+ min',
-                    grupo: 'tempo',
-                    valor: 'longo',
-                    selecionado: tempoSelecionado == 'longo',
-                  ),
+                  _buildOpcao('10 - 20 min', 'tempo', 'curto', tempoSelecionado == 'curto'),
+                  _buildOpcao('20 - 40 min', 'tempo', 'medio', tempoSelecionado == 'medio'),
+                  _buildOpcao('40+ min', 'tempo', 'longo', tempoSelecionado == 'longo'),
                 ],
               ),
               const SizedBox(height: 32),
 
-              // Pergunta 3: Humor
               _buildPerguntaTitulo('Como te sentes?'),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildOpcao(
-                    texto: 'Motivado 💪',
-                    grupo: 'humor',
-                    valor: 'motivado',
-                    selecionado: humorSelecionado == 'motivado',
-                  ),
-                  _buildOpcao(
-                    texto: 'Tranquilo 🧘',
-                    grupo: 'humor',
-                    valor: 'tranquilo',
-                    selecionado: humorSelecionado == 'tranquilo',
-                  ),
-                  _buildOpcao(
-                    texto: 'Stressado 🤯',
-                    grupo: 'humor',
-                    valor: 'stressado',
-                    selecionado: humorSelecionado == 'stressado',
-                  ),
+                  _buildOpcao('Motivado 💪', 'humor', 'motivado', humorSelecionado == 'motivado'),
+                  _buildOpcao('Tranquilo 🧘', 'humor', 'tranquilo', humorSelecionado == 'tranquilo'),
+                  _buildOpcao('Stressado 🤯', 'humor', 'stressado', humorSelecionado == 'stressado'),
                 ],
               ),
               const SizedBox(height: 48),
 
-              // Botão de Ação
-             SizedBox(
+              SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: (isLoading || energiaSelecionada.isEmpty || tempoSelecionado.isEmpty) 
-                      ? null // Desativa o botão se não tiver tudo preenchido
+                  onPressed: (_estaACaregar || energiaSelecionada.isEmpty || tempoSelecionado.isEmpty) 
+                      ? null 
                       : () async {
                           setState(() {
-                            isLoading = true;
+                            _estaACaregar = true;
                           });
 
-                          // 1. Vai à API buscar os exercícios!
                           final listaExercicios = await ApiService.obterTreino(energiaSelecionada, tempoSelecionado);
 
                           setState(() {
-                            isLoading = false;
+                            _estaACaregar = false;
                           });
 
-                          // 2. Navega para o ecrã de Treinos, passando a lista gerada
-                          if (mounted) {
-                            // Mais tarde substituimos isto para mudar de aba, mas para já forçamos a navegação
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TreinosScreen(exerciciosGerados: listaExercicios),
-                              ),
-                            );
-                          }
+                          // A CORREÇÃO DA NAVEGAÇÃO ESTÁ AQUI
+                          // Muda de aba e mantém a barra de navegação visível!
+                          widget.onTreinoGerado(listaExercicios);
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4DD0E1), // Ciano
+                    backgroundColor: const Color(0xFF4DD0E1), 
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     shape: RoundedRectangleBorder(
@@ -165,10 +104,9 @@ class _DiarioScreenState extends State<DiarioScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: isLoading
+                  child: _estaACaregar
                       ? const SizedBox(
-                          height: 20,
-                          width: 20,
+                          height: 20, width: 20,
                           child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
                         )
                       : const Text(
@@ -184,23 +122,11 @@ class _DiarioScreenState extends State<DiarioScreen> {
     );
   }
 
-  // Widget auxiliar para os Títulos das Perguntas
   Widget _buildPerguntaTitulo(String titulo) {
-    return Center(
-      child: Text(
-        titulo,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-      ),
-    );
+    return Center(child: Text(titulo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)));
   }
 
-  // Widget auxiliar para construir os "Chips" de resposta
-  Widget _buildOpcao({
-    required String texto,
-    required String grupo,
-    required String valor,
-    required bool selecionado,
-  }) {
+  Widget _buildOpcao(String texto, String grupo, String valor, bool selecionado) {
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -214,32 +140,12 @@ class _DiarioScreenState extends State<DiarioScreen> {
           margin: const EdgeInsets.symmetric(horizontal: 4.0),
           padding: const EdgeInsets.symmetric(vertical: 12.0),
           decoration: BoxDecoration(
-            color: selecionado ? const Color(0xFFE0F7FA) : Colors.white, // Muda a cor se selecionado
-            border: Border.all(
-              color: selecionado ? const Color(0xFF4DD0E1) : Colors.transparent, // Borda ciano
-              width: 1.5,
-            ),
+            color: selecionado ? const Color(0xFFE0F7FA) : Colors.white, 
+            border: Border.all(color: selecionado ? const Color(0xFF4DD0E1) : Colors.transparent, width: 1.5),
             borderRadius: BorderRadius.circular(12.0),
-            boxShadow: [
-              if (!selecionado)
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-            ],
+            boxShadow: [if (!selecionado) BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 2))],
           ),
-          child: Center(
-            child: Text(
-              texto,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
-                color: Colors.black87,
-              ),
-            ),
-          ),
+          child: Center(child: Text(texto, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: selecionado ? FontWeight.bold : FontWeight.normal, color: Colors.black87))),
         ),
       ),
     );

@@ -6,6 +6,8 @@ import 'treinos/treinos_screen.dart';
 import 'social/amigos_screen.dart';
 import 'diario/diario_screen.dart';
 
+
+
 void main() {
   runApp(const RealFitApp());
 }
@@ -19,8 +21,8 @@ class RealFitApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'RealFit',
       theme: ThemeData(
-        fontFamily: 'Poppins', // Se usarem a fonte Poppins
-        scaffoldBackgroundColor: const Color(0xFFF5F5F5), // Fundo cinzento claro global
+        fontFamily: 'Poppins', 
+        scaffoldBackgroundColor: const Color(0xFFF5F5F5),
       ),
       home: const MainNavegacao(), 
     );
@@ -35,29 +37,35 @@ class MainNavegacao extends StatefulWidget {
 }
 
 class _MainNavegacaoState extends State<MainNavegacao> {
-  // Começamos no índice 1 para abrir logo o teu ecrã de Treinos!
-  int _indiceAtual = 1; 
+  int _indiceAtual = 0; // Arranca no Diário!
+  List<Map<String, dynamic>>? _exerciciosGlobais; // Guarda os exercícios aqui
 
-  // Lista dos ecrãs de cada colega (4 abas agora, conforme a tua imagem)
-  final List<Widget> _ecras = [
-    const DiarioScreen(), // Aba 0
-    const TreinosScreen(), // Aba 1 - O TEU ECRÃ
-    const AmigosScreen(),  // Aba 2 - O Colega 3
-    const Center(child: Text("Aba Perfil", style: TextStyle(fontWeight: FontWeight.bold))), // Aba 3
-  ];
+  // Função que muda para a aba de Treinos com os novos exercícios
+  void _mudarParaTreinos(List<Map<String, dynamic>> novosExercicios) {
+    setState(() {
+      _exerciciosGlobais = novosExercicios;
+      _indiceAtual = 1; // 1 é a aba dos Treinos
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> ecras = [
+      DiarioScreen(onTreinoGerado: _mudarParaTreinos), // Aba 0
+      TreinosScreen(exerciciosGerados: _exerciciosGlobais), // Aba 1
+      const AmigosScreen(),  // Aba 2
+      const Center(child: Text("Aba Perfil", style: TextStyle(fontWeight: FontWeight.bold))), // Aba 3
+    ];
+
     return Scaffold(
-      body: _ecras[_indiceAtual],
-      // Aqui está a magia da Barra Flutuante!
+      body: ecras[_indiceAtual],
       bottomNavigationBar: SafeArea(
         child: Container(
-          margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16), // Margens para flutuar
+          margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(30), // Bordas bem circulares
+            borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -80,10 +88,8 @@ class _MainNavegacaoState extends State<MainNavegacao> {
     );
   }
 
-  // Função que constrói cada botão da barra de navegação
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _indiceAtual == index;
-    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -92,27 +98,17 @@ class _MainNavegacaoState extends State<MainNavegacao> {
       },
       behavior: HitTestBehavior.opaque,
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Ocupa apenas o espaço necessário
+        mainAxisSize: MainAxisSize.min, 
         children: [
-          Icon(
-            icon,
-            color: Colors.black, // Ícones sempre pretos e sólidos
-            size: 26,
-          ),
+          Icon(icon, color: Colors.black, size: 26),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.bold, // Texto SEMPRE em negrito (bold)
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12),
           ),
           const SizedBox(height: 4),
-          // A Barrinha indicadora (Ciano se selecionada, invisível se não)
           Container(
-            height: 3,
-            width: 24,
+            height: 3, width: 24,
             decoration: BoxDecoration(
               color: isSelected ? const Color(0xFF4DD0E1) : Colors.transparent, 
               borderRadius: BorderRadius.circular(2),
