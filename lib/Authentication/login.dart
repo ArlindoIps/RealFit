@@ -1,52 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import 'forgot_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
+ 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-
+ 
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _rememberMe = false;
   bool _isLoading = false;
-
+ 
   final AuthService _authService = AuthService();
-
+ 
   // Cor principal usada nos botões e destaques (mint/turquesa do design)
   static const Color mintColor = Color(0xFF7FE0D0);
   static const Color fieldColor = Color(0xFFF3F3F3);
   static const Color avatarColor = Color(0xFF4A4A4A);
-
+ 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
-
+ 
   Future<void> _handleLogin() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-
+ 
     if (email.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preenche o email e a palavra-passe.')),
       );
       return;
     }
-
+ 
     setState(() => _isLoading = true);
-
+ 
     try {
       final user = await _authService.login(email: email, password: password);
       if (!mounted || user == null) return;
-
+ 
       // Não navegamos manualmente aqui: o AuthGate (main.dart) está a ouvir
       // authStateChanges() e vai automaticamente mostrar o ecrã certo
       // (questionário ou app principal) assim que este login for detetado.
@@ -67,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 24),
-
+ 
               // Avatar circular
               Center(
                 child: Container(
@@ -96,9 +97,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-
+ 
               const SizedBox(height: 40),
-
+ 
               // Campo Email
               _buildTextField(
                 controller: _emailController,
@@ -106,9 +107,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
               ),
-
+ 
               const SizedBox(height: 16),
-
+ 
               // Campo Palavra Passe
               _buildTextField(
                 controller: _passwordController,
@@ -121,9 +122,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   setState(() => _obscurePassword = !_obscurePassword);
                 },
               ),
-
+ 
               const SizedBox(height: 16),
-
+ 
               // Lembrar / Esqueceu palavra-passe
               Row(
                 children: [
@@ -138,7 +139,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Spacer(),
                   TextButton(
                     onPressed: () {
-                      // TODO: navegação para recuperação de palavra-passe
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgotPasswordScreen(),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Esqueceu Palavra Passe?',
@@ -151,18 +157,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ],
               ),
-
+ 
               const SizedBox(height: 24),
-
+ 
               // Botão Login
               _buildActionButton(
                 label: 'Login',
                 onPressed: _isLoading ? null : _handleLogin,
                 isLoading: _isLoading,
               ),
-
+ 
               const SizedBox(height: 16),
-
+ 
               // Botão Registar
               _buildActionButton(
                 label: 'Registar',
@@ -170,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Navigator.pushNamed(context, '/register');
                 },
               ),
-
+ 
               const SizedBox(height: 24),
             ],
           ),
@@ -178,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
+ 
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -213,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
+ 
   Widget _buildActionButton({
     required String label,
     required VoidCallback? onPressed,
@@ -252,3 +258,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+ 
+
