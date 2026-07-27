@@ -174,12 +174,13 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildActionButton(
                 label: 'Registar',
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RegisterScreen(), // Confirma se o nome da classe é este no ficheiro register.dart do Luís
-                    ),
-                  );
+
+                Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
+                            ),
+                        );
                 },
               ),
  

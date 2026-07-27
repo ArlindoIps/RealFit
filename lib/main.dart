@@ -6,8 +6,9 @@ import 'Authentication/auth_gate.dart';
 
 import 'treinos/treinos_screen.dart';
 import 'social/amigos_screen.dart';
-import 'diario/diario_screen.dart';
 
+import 'diario/diario_screen.dart';
+import 'Authentication/perfil_screen.dart';
 
 void main() async {
   
@@ -62,6 +63,13 @@ class _MainNavegacaoState extends State<MainNavegacao> {
       _indiceAtual = 1; 
     });
   }
+  int _indiceAtual = 0;
+  // Lista dos ecrãs de cada colega
+  final List<Widget> _ecras = [
+    const TreinosScreen(), // Aba 0
+    const AmigosScreen(),  // Aba 1
+    const ProfileScreen() 
+  ];
 
   @override
   Widget build(BuildContext context) {

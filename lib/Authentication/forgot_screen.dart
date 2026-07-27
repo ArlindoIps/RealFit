@@ -3,7 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+  /// Se vier preenchido (ex: a partir do ecrã "Dados Pessoais", com o email
+  /// do utilizador já autenticado), o campo de email aparece pré-preenchido.
+  /// Também muda o título/texto para refletir que é uma "Alteração de
+  /// Palavra Passe" em vez de uma recuperação por esquecimento.
+  final String? initialEmail;
+
+  const ForgotPasswordScreen({super.key, this.initialEmail});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -18,6 +24,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   bool _isLoading = false;
   bool _emailSent = false;
+
+  bool get _isChangePasswordMode => widget.initialEmail != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialEmail != null) {
+      _emailController.text = widget.initialEmail!;
+    }
+  }
 
   @override
   void dispose() {
@@ -80,9 +96,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
               const SizedBox(height: 24),
 
-              const Text(
-                'Recuperar Palavra Passe',
-                style: TextStyle(
+              Text(
+                _isChangePasswordMode
+                    ? 'Alterar Palavra Passe'
+                    : 'Recuperar Palavra Passe',
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
                   color: Colors.black87,
@@ -96,8 +114,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ? 'Enviámos um email para $_emailControllerText com as '
                         'instruções para redefinires a tua palavra-passe. '
                         'Verifica também a pasta de spam.'
-                    : 'Introduz o email associado à tua conta. Vamos enviar-te '
-                        'um link para criares uma nova palavra-passe.',
+                    : _isChangePasswordMode
+                        ? 'Por segurança, vamos enviar-te um email para '
+                            'definires a tua nova palavra-passe.'
+                        : 'Introduz o email associado à tua conta. Vamos enviar-te '
+                            'um link para criares uma nova palavra-passe.',
                 style: const TextStyle(
                   fontSize: 15,
                   color: Colors.black54,
@@ -112,6 +133,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   controller: _emailController,
                   label: 'Email',
                   keyboardType: TextInputType.emailAddress,
+                  enabled: !_isChangePasswordMode,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -198,6 +220,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     required TextEditingController controller,
     required String label,
     TextInputType keyboardType = TextInputType.text,
+    bool enabled = true,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -208,6 +231,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        enabled: enabled,
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: label,
