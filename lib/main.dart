@@ -62,13 +62,6 @@ class _MainNavegacaoState extends State<MainNavegacao> {
       _indiceAtual = 1; 
     });
   }
-  int _indiceAtual = 0;
-  // Lista dos ecrãs de cada colega
-  final List<Widget> _ecras = [
-    const TreinosScreen(), // Aba 0
-    const AmigosScreen(),  // Aba 1
-    const ProfileScreen() 
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +70,7 @@ class _MainNavegacaoState extends State<MainNavegacao> {
       DiarioScreen(onTreinoGerado: _mudarParaTreinos), // Aba 0
       TreinosScreen(exerciciosGerados: _exerciciosGlobais), // Aba 1
       const AmigosScreen(),  // Aba 2
-      const Center(child: Text("Aba Perfil", style: TextStyle(fontWeight: FontWeight.bold))), // Aba 3 (Provisório)
+      const ProfileScreen()
     ];
 
     return Scaffold(
