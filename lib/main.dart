@@ -5,7 +5,6 @@ import 'Authentication/auth_gate.dart';
 
 
 import 'treinos/treinos_screen.dart';
-import 'social/amigos_screen.dart';
 
 import 'diario/diario_screen.dart';
 import 'Authentication/perfil_screen.dart';
