@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'Authentication/auth_gate.dart';
 
 // Importa os ecrãs que cada um vai desenvolver
-import 'Login/Registo/login_screen.dart';
 import 'treinos/treinos_screen.dart';
 import 'social/amigos_screen.dart';
+import 'Authentication/perfil_screen.dart';
 
-void main() {
+void main() async {
+  // Necessário para poder chamar código assíncrono (Firebase.initializeApp)
+  // antes de runApp().
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const RealFitApp());
 }
 
@@ -16,31 +27,30 @@ class RealFitApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'RealFit',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.cyan, // A cor primária do vosso design
       ),
-      // Para já, arranca logo no ecrã principal com as abas.
-      // Mais tarde, o Colega 1 muda isto para arrancar no LoginScreen!
-      home: const MainNavegacao(), 
+      // O AuthGate decide, com base no estado de autenticação do Firebase,
+      // se mostra o LoginScreen, o Questionário ou a navegação principal.
+      home: AuthGate(),
     );
   }
 }
 
 class MainNavegacao extends StatefulWidget {
   const MainNavegacao({super.key});
-
   @override
   State<MainNavegacao> createState() => _MainNavegacaoState();
 }
 
 class _MainNavegacaoState extends State<MainNavegacao> {
   int _indiceAtual = 0;
-
   // Lista dos ecrãs de cada colega
   final List<Widget> _ecras = [
     const TreinosScreen(), // Aba 0
     const AmigosScreen(),  // Aba 1
-    const Center(child: Text("Perfil/Estatísticas Aqui")), // Aba 2
+    const ProfileScreen() 
   ];
 
   @override
