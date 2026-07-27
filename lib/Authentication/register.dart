@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
+import 'physical_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -76,25 +77,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await user.updateDisplayName(name);
 
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Conta criada com sucesso!')),
-      );
-      // Não navegamos manualmente aqui: o AuthGate (main.dart) está a ouvir
-      // authStateChanges() e, assim que este registo for detetado, mostra
-      // automaticamente o PhysicalCapacityScreen (porque o questionário
-      // ainda não foi preenchido para este utilizador).
+              const SnackBar(
+                  content: Text('Conta criada com sucesso!'),
+                  ),
+              );
+
+      Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const PhysicalCapacityScreen(),
+                  ),
+              );
+
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_authService.friendlyError(e))),
-      );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(_authService.friendlyError(e))),
+                );
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro inesperado: $e')),
-      );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Erro inesperado: $e')),
+                );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
     }
   }
 

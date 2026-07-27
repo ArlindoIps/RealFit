@@ -4,20 +4,51 @@ import '../services/database_service.dart';
 import 'auth_gate.dart';
 
 class GoalScreen extends StatefulWidget {
-  const GoalScreen({super.key});
-
+  /// Quando true, este ecrã é aberto a partir do Perfil para editar o
+  /// objetivo já escolhido, em vez do fluxo de onboarding inicial.
+  final bool isEditing;
+ 
+  const GoalScreen({super.key, this.isEditing = false});
+ 
   @override
   State<GoalScreen> createState() => _GoalScreenState();
 }
-
+ 
 class _GoalScreenState extends State<GoalScreen> {
   static const Color mintColor = Color(0xFF7FE0D0);
   static const Color fieldColor = Color(0xFFF3F3F3);
-
+ 
   final DatabaseService _databaseService = DatabaseService();
   String? _selectedGoal;
   bool _isLoading = false;
-
+  bool _isLoadingInitialData = false;
+ 
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing) {
+      _loadExistingGoal();
+    }
+  }
+ 
+  Future<void> _loadExistingGoal() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+ 
+    setState(() => _isLoadingInitialData = true);
+ 
+    try {
+      final questionnaire = await _databaseService.getQuestionnaire(user.uid);
+      final goal = questionnaire?['goal'] as String?;
+ 
+      if (goal != null && mounted) {
+        setState(() => _selectedGoal = goal);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingInitialData = false);
+    }
+  }
+ 
   Future<void> _handleContinue() async {
     if (_selectedGoal == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -25,7 +56,7 @@ class _GoalScreenState extends State<GoalScreen> {
       );
       return;
     }
-
+ 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -33,13 +64,22 @@ class _GoalScreenState extends State<GoalScreen> {
       );
       return;
     }
-
+ 
     setState(() => _isLoading = true);
-
+ 
     try {
       await _databaseService.saveGoal(user.uid, _selectedGoal!);
-
+ 
       if (!mounted) return;
+ 
+      if (widget.isEditing) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Objetivo atualizado com sucesso!')),
+        );
+        Navigator.pop(context);
+        return;
+      }
+ 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Perfil e objetivo guardados com sucesso!')),
       );
@@ -57,9 +97,16 @@ class _GoalScreenState extends State<GoalScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingInitialData) {
+      return const Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+ 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -69,7 +116,7 @@ class _GoalScreenState extends State<GoalScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 32),
-
+ 
               const Text(
                 'Qual é o seu objetivo',
                 style: TextStyle(
@@ -78,9 +125,9 @@ class _GoalScreenState extends State<GoalScreen> {
                   color: Colors.black87,
                 ),
               ),
-
+ 
               const SizedBox(height: 16),
-
+ 
               const Text(
                 'O que te traz ao RealFit? Define o teu objetivo principal '
                 'para começarmos a construir a tua rotina de exercícios '
@@ -91,18 +138,18 @@ class _GoalScreenState extends State<GoalScreen> {
                   height: 1.4,
                 ),
               ),
-
+ 
               const SizedBox(height: 32),
-
+ 
               ...GoalOptions.options.map((goal) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: _buildGoalOption(goal),
                 );
               }),
-
+ 
               const SizedBox(height: 24),
-
+ 
               Row(
                 children: [
                   Expanded(
@@ -155,9 +202,9 @@ class _GoalScreenState extends State<GoalScreen> {
                                       Colors.black87),
                                 ),
                               )
-                            : const Text(
-                                'Continuar',
-                                style: TextStyle(
+                            : Text(
+                                widget.isEditing ? 'Guardar' : 'Continuar',
+                                style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -167,7 +214,7 @@ class _GoalScreenState extends State<GoalScreen> {
                   ),
                 ],
               ),
-
+ 
               const SizedBox(height: 24),
             ],
           ),
@@ -175,10 +222,10 @@ class _GoalScreenState extends State<GoalScreen> {
       ),
     );
   }
-
+ 
   Widget _buildGoalOption(String goal) {
     final isSelected = _selectedGoal == goal;
-
+ 
     return GestureDetector(
       onTap: () => setState(() => _selectedGoal = goal),
       child: Container(

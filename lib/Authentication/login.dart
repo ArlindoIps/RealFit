@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import 'forgot_screen.dart';
+import 'register.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -173,7 +174,12 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildActionButton(
                 label: 'Registar',
                 onPressed: () {
-                  Navigator.pushNamed(context, '/register');
+                Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
+                            ),
+                        );
                 },
               ),
  

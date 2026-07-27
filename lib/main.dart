@@ -6,6 +6,7 @@ import 'Authentication/auth_gate.dart';
 // Importa os ecrãs que cada um vai desenvolver
 import 'treinos/treinos_screen.dart';
 import 'social/amigos_screen.dart';
+import 'Authentication/perfil_screen.dart';
 
 void main() async {
   // Necessário para poder chamar código assíncrono (Firebase.initializeApp)
@@ -49,7 +50,7 @@ class _MainNavegacaoState extends State<MainNavegacao> {
   final List<Widget> _ecras = [
     const TreinosScreen(), // Aba 0
     const AmigosScreen(),  // Aba 1
-    const Center(child: Text("Perfil/Estatísticas Aqui")), // Aba 2
+    const ProfileScreen() 
   ];
 
   @override
