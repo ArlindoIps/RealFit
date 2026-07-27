@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "535537539993",
+    "firebase_url": "https://projetocm-41cb9-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "projetocm-41cb9",
+    "storage_bucket": "projetocm-41cb9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:535537539993:android:2ac43410a8d9a9d30bd108",
+        "android_client_info": {
+          "package_name": "com.example.projeto2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwryiFCL7YkfwLOaldZkl4fs981NBkN14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:535537539993:android:b6bb1aae5ce06bad0bd108",
+        "android_client_info": {
+          "package_name": "com.example.realfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwryiFCL7YkfwLOaldZkl4fs981NBkN14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:535537539993:android:18812b153e02c2e10bd108",
+        "android_client_info": {
+          "package_name": "com.example.realfit_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAwryiFCL7YkfwLOaldZkl4fs981NBkN14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
