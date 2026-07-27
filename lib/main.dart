@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'Authentication/auth_gate.dart';
 
-// Importa os ecrãs que cada um vai desenvolver
-import 'Login/Registo/login_screen.dart';
+
 import 'treinos/treinos_screen.dart';
 import 'social/amigos_screen.dart';
 import 'diario/diario_screen.dart';
 
 
+void main() async {
+  
+  WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const RealFitApp());
 }
 
@@ -18,43 +26,51 @@ class RealFitApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'RealFit',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         fontFamily: 'Poppins', 
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
       ),
-      home: const MainNavegacao(), 
+      
+      home: AuthGate(),
     );
   }
 }
 
+/// Widget principal pós-autenticação, responsável por renderizar 
+/// a Bottom Navigation Bar e os ecrãs associados a cada aba.
 class MainNavegacao extends StatefulWidget {
   const MainNavegacao({super.key});
-
+  
   @override
   State<MainNavegacao> createState() => _MainNavegacaoState();
 }
 
 class _MainNavegacaoState extends State<MainNavegacao> {
-  int _indiceAtual = 0; // Arranca no Diário!
-  List<Map<String, dynamic>>? _exerciciosGlobais; // Guarda os exercícios aqui
+  // A aplicação arranca na Aba 0 (Diário)
+  int _indiceAtual = 0; 
+  
+  // Variável global para transferir a sugestão de exercícios entre ecrãs
+  List<Map<String, dynamic>>? _exerciciosGlobais; 
 
-  // Função que muda para a aba de Treinos com os novos exercícios
+  /// Altera o índice da navegação para a aba "Treinos" (Aba 1) 
+  /// após a submissão das respostas do Diário Diário.
   void _mudarParaTreinos(List<Map<String, dynamic>> novosExercicios) {
     setState(() {
       _exerciciosGlobais = novosExercicios;
-      _indiceAtual = 1; // 1 é a aba dos Treinos
+      _indiceAtual = 1; 
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Lista ordenada dos ecrãs de topo
     final List<Widget> ecras = [
       DiarioScreen(onTreinoGerado: _mudarParaTreinos), // Aba 0
       TreinosScreen(exerciciosGerados: _exerciciosGlobais), // Aba 1
       const AmigosScreen(),  // Aba 2
-      const Center(child: Text("Aba Perfil", style: TextStyle(fontWeight: FontWeight.bold))), // Aba 3
+      const Center(child: Text("Aba Perfil", style: TextStyle(fontWeight: FontWeight.bold))), // Aba 3 (Provisório)
     ];
 
     return Scaffold(
@@ -88,6 +104,7 @@ class _MainNavegacaoState extends State<MainNavegacao> {
     );
   }
 
+  /// Constrói cada elemento da barra de navegação.
   Widget _buildNavItem(int index, IconData icon, String label) {
     final isSelected = _indiceAtual == index;
     return GestureDetector(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'treino_concluido_screen.dart';
+import '../services/database_service.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Ecrã responsável pela execução de um treino.
 ///
@@ -29,6 +32,8 @@ class TreinoAtivoScreen extends StatefulWidget {
 class _TreinoAtivoScreenState extends State<TreinoAtivoScreen> {
   /// Índice do exercício atualmente apresentado.
   int _exercicioAtual = 0;
+
+  bool _isTreinoDescarregado = false;
 
   /// Avança para o exercício seguinte.
   ///
@@ -124,11 +129,42 @@ class _TreinoAtivoScreenState extends State<TreinoAtivoScreen> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: OutlinedButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(Icons.download, size: 16, color: Colors.black87),
-                  label: const Text('Descarregar', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                  onPressed: _isTreinoDescarregado ? null : () async {
+                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                    if (uid != null) {
+                      
+                      await DatabaseService().salvarTreinoDescarregado(
+                        uid, 
+                        'Treino Ativo / Completo', 
+                        '250MB' // Tamanho estimado do pacote do treino
+                      );
+
+                      
+                      setState(() {
+                        _isTreinoDescarregado = true;
+                      });
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Treino descarregado com sucesso para modo offline!')),
+                        );
+                      }
+                    }
+                  },
+                  icon: Icon(
+                    _isTreinoDescarregado ? Icons.check : Icons.download, 
+                    size: 16, 
+                    color: _isTreinoDescarregado ? Colors.grey : Colors.black87
+                  ),
+                  label: Text(
+                    _isTreinoDescarregado ? 'Descarregado' : 'Descarregar', 
+                    style: TextStyle(
+                      color: _isTreinoDescarregado ? Colors.grey : Colors.black87, 
+                      fontSize: 12
+                    )
+                  ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF4DD0E1)),
+                    side: BorderSide(color: _isTreinoDescarregado ? Colors.grey : const Color(0xFF4DD0E1)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
                   ),
                 ),

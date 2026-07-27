@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/database_service.dart';
 
 class DiarioScreen extends StatefulWidget {
   // AVISO: Agora recebe a função do main.dart para mudar de aba!
@@ -28,10 +30,7 @@ class _DiarioScreenState extends State<DiarioScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
-              const Text(
-                'Bom dia, Arlindo!',
-                style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87),
-              ),
+              _buildSaudacaoDinamica(),
               const SizedBox(height: 8),
               const Text(
                 'Vamos tornar hoje um dia incrível.\nAjusta o teu treino ao teu estado atual e mantém o foco nos teus objetivos.',
@@ -150,4 +149,52 @@ class _DiarioScreenState extends State<DiarioScreen> {
       ),
     );
   }
+  Widget _buildSaudacaoDinamica() {
+  
+  final String? uid = FirebaseAuth.instance.currentUser?.uid;
+
+  
+  if (uid == null) {
+    return const Text(
+      'Bom dia!',
+      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    );
+  }
+
+  
+  return FutureBuilder<UserProfile?>(
+    future: DatabaseService().getUserProfile(uid),
+    builder: (context, snapshot) {
+      
+      
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const SizedBox(
+          height: 24, 
+          width: 24, 
+          child: CircularProgressIndicator(strokeWidth: 2)
+        );
+      }
+
+      // Se houver algum erro de rede ou o perfil não existir
+      if (snapshot.hasError || !snapshot.hasData || snapshot.data == null) {
+        return const Text(
+          'Bom dia, Atleta!',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        );
+      }
+
+      
+      final String nomeReal = snapshot.data!.name;
+
+      return Text(
+        'Bom dia, $nomeReal!',
+        style: const TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      );
+    },
+  );
+}
 }

@@ -3,7 +3,9 @@ import 'treino_ativo_screen.dart';
 import 'treino_personalizado_screen.dart';
 import 'treinos_anteriores_screen.dart';
 import 'estatisticas_screen.dart';
-
+import '../services/database_service.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Ecrã principal da secção de Treinos.
 ///
@@ -135,15 +137,31 @@ class TreinosScreen extends StatelessWidget {
               
               onPressed: (exerciciosGerados == null || exerciciosGerados!.isEmpty) 
                   ? null 
-                  : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TreinoAtivoScreen(
-                            exercicios: exerciciosGerados!,
+                  : () async {
+                      // 1. Descobrir quem está logado
+                      final uid = FirebaseAuth.instance.currentUser?.uid;
+                      
+                      // 2. Gravar no Firebase (Hardcoded para o treino automático)
+                      if (uid != null) {
+                        await DatabaseService().salvarTreinoNoHistorico(
+                          uid, 
+                          'Treino Recomendado', 
+                          '30 min', 
+                          'Moderada'
+                        );
+                      }
+
+                      // 3. Navegar para o Player do Treino
+                      if (context.mounted) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TreinoAtivoScreen(
+                              exercicios: exerciciosGerados!,
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB2EBF2), // Cor ciano clara
@@ -166,7 +184,22 @@ class TreinosScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () {},
+              onPressed: () async {
+              final uid = FirebaseAuth.instance.currentUser?.uid;
+              if (uid != null) {
+                await DatabaseService().salvarTreinoDescarregado(
+                  uid, 
+                  'Treino Recomendado', 
+                  '150MB' // Tamanho estimado do ficheiro de treino
+                );
+                
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Treino descarregado com sucesso para modo offline!')),
+                  );
+                }
+              }
+            },
               icon: const Icon(Icons.download, size: 20, color: Colors.black87),
               label: const Text(
                 'Descarregar',

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'treino_ativo_screen.dart';
+import '../services/database_service.dart';
+import '../services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Ecrã de criação de um treino manual e personalizado.
 ///
@@ -69,6 +72,19 @@ class _TreinoPersonalizadoScreenState extends State<TreinoPersonalizadoScreen> {
     setState(() {
       _estaACaregar = false;
     });
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      // Usamos as opções reais que o utilizador escolheu no ecrã!
+      String nomeDoTreino = _nomeController.text.isNotEmpty ? _nomeController.text : 'Treino Personalizado';
+      
+      await DatabaseService().salvarTreinoNoHistorico(
+        uid, 
+        nomeDoTreino, 
+        _tempoSelecionado, 
+        _intensidadeSelecionada
+      );
+    }
 
     // Valida se o ecrã ainda está montado na árvore de widgets antes de navegar.
     // O pushReplacement é usado para não permitir ao utilizador voltar a este ecrã de setup

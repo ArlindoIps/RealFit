@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/database_service.dart';
 
 /// Ecrã responsável por apresentar os treinos passados do utilizador.
-///
-/// Este ecrã permite alternar entre duas visualizações:
-/// 1. O histórico de treinos já realizados.
-/// 2. Os treinos descarregados para acesso offline.
 class TreinosAnterioresScreen extends StatefulWidget {
   const TreinosAnterioresScreen({super.key});
 
@@ -15,54 +13,14 @@ class TreinosAnterioresScreen extends StatefulWidget {
 class _TreinosAnterioresScreenState extends State<TreinosAnterioresScreen> {
   
   /// Variável de estado que controla qual a lista selecionada.
-  /// Se for [true], apresenta o Histórico. Se for [false], apresenta os Descarregados.
   bool _mostrarHistorico = true;
 
-  // Dados provisórios para o Histórico 
-  final List<Map<String, String>> _historico = [
-    {
-      'nome': 'Mega Braços',
-      'duracao': '40min',
-      'intensidade': 'Moderado',
-      'data': '20-12-2025',
-    },
-    {
-      'nome': 'Treino de pernas',
-      'duracao': '20min',
-      'intensidade': 'Baixa',
-      'data': '21-09-2025',
-    },
-    {
-      'nome': 'Flexibilidade de ombros',
-      'duracao': '15min',
-      'intensidade': 'Baixa',
-      'data': '08-12-2025',
-    },
-  ];
-
   
-  final List<Map<String, String>> _descarregados = [
-    {
-      'nome': 'Mega Braços',
-      'tamanho': '200MB',
-      'data': '20-12-2025',
-    },
-    {
-      'nome': 'Treino de pernas',
-      'tamanho': '120MB',
-      'data': '21-09-2025',
-    },
-    {
-      'nome': 'Flexibilidade de ombros',
-      'tamanho': '300MB',
-      'data': '08-12-2025',
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
     
-    final listaAtual = _mostrarHistorico ? _historico : _descarregados;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -123,57 +81,125 @@ class _TreinosAnterioresScreenState extends State<TreinosAnterioresScreen> {
             ),
             const SizedBox(height: 32),
             
-            
+            // Desenha a lista Dinâmica (Firebase) ou Estática (Descarregados)
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                itemCount: listaAtual.length,
-                itemBuilder: (context, index) {
-                  final item = listaAtual[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    padding: const EdgeInsets.all(20.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Nome do treino: ${item['nome']}', style: const TextStyle(fontSize: 14, height: 1.5)),
-                        if (_mostrarHistorico) 
-                          Text('Duração: ${item['duracao']}', style: const TextStyle(fontSize: 14, height: 1.5)),
-                        if (_mostrarHistorico)
-                          Text('Intensidade: ${item['intensidade']}', style: const TextStyle(fontSize: 14, height: 1.5)),
-                        if (!_mostrarHistorico)
-                          Text('Tamanho do ficheiro : ${item['tamanho']}', style: const TextStyle(fontSize: 14, height: 1.5)),
-                        Text('Data: ${item['data']}', style: const TextStyle(fontSize: 14, height: 1.5)),
-                        
-                        const SizedBox(height: 16),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFE0F7FA), // Ciano muito claro
-                              foregroundColor: Colors.black,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                            ),
-                            child: const Text('Iniciar treino', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+              child: _mostrarHistorico 
+                  ? _buildHistoricoDinamico(uid) 
+                  : _buildDescarregadosDinamicos(uid),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Constrói a aba de Histórico puxando dados em tempo real do Firebase
+  Widget _buildHistoricoDinamico(String? uid) {
+    if (uid == null) {
+      return const Center(child: Text("Faz login para veres o teu histórico."));
+    }
+
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: DatabaseService().lerHistoricoTreinos(uid),
+      builder: (context, snapshot) {
+        
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF7FE0D0)));
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              "Ainda não fizeste nenhum treino.\nComeça agora!",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.black54),
+            ),
+          );
+        }
+
+        
+        return _buildListaCartoes(snapshot.data!, isHistorico: true);
+      },
+    );
+  }
+  Widget _buildDescarregadosDinamicos(String? uid) {
+    if (uid == null) {
+      return const Center(child: Text("Faz login para veres os downloads."));
+    }
+
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: DatabaseService().lerTreinosDescarregados(uid),
+      builder: (context, snapshot) {
+        
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF7FE0D0)));
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              "Ainda não tens treinos descarregados.",
+              style: TextStyle(fontSize: 16, color: Colors.black54),
+            ),
+          );
+        }
+
+        return _buildListaCartoes(snapshot.data!, isHistorico: false);
+      },
+    );
+  }
+
+
+  Widget _buildListaCartoes(List<Map<String, dynamic>> listaAtual, {required bool isHistorico}) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      itemCount: listaAtual.length,
+      itemBuilder: (context, index) {
+        final item = listaAtual[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16.0),
+          padding: const EdgeInsets.all(20.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Nome do treino: ${item['nome'] ?? 'Treino'}', style: const TextStyle(fontSize: 14, height: 1.5)),
+              
+              if (isHistorico) 
+                Text('Duração: ${item['duracao'] ?? '-'}', style: const TextStyle(fontSize: 14, height: 1.5)),
+              if (isHistorico)
+                Text('Intensidade: ${item['intensidade'] ?? '-'}', style: const TextStyle(fontSize: 14, height: 1.5)),
+              
+              if (!isHistorico)
+                Text('Tamanho do ficheiro: ${item['tamanho'] ?? '-'}', style: const TextStyle(fontSize: 14, height: 1.5)),
+              
+              Text('Data: ${item['data'] ?? '-'}', style: const TextStyle(fontSize: 14, height: 1.5)),
+              
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Aqui futuramente podemos fazer Navigator.push para iniciar o treino de novo
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE0F7FA), // Ciano muito claro
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
+                  child: const Text('Iniciar treino', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -25,10 +25,10 @@ O **RealFit** é uma aplicação móvel interativa e empática de fitness, desen
 1. **Autenticação e Registo:** Implementado com **Firebase Auth** (Email/Password), estando a UI preparada para futura integração de biometria e autenticação Google.
 2. **Sistema de Notificações:** Implementação de push notifications com um tom de comunicação empático focado no autocuidado.
 3. **Integração com API Externa:** Integração com a **API Pública Wger** para geração dinâmica de rotinas de treino baseadas no estado de espírito do utilizador.
-4. **Base de Dados Remota:** Implementado para gerir os perfis, o histórico de consistência (conquistas) e as interações sociais.
+4. **Base de Dados Remota:** Implementado com **Firebase Realtime Database** para gerir os perfis, o histórico de consistência (conquistas) e as interações sociais.
 
 ---
-
+ 
 ## 🛠️ Funcionalidades Implementadas
 
 O projeto foi construído em **Flutter**, seguindo boas práticas de modularização de código (separação entre UI e Lógica/Serviços) e integra as seguintes funcionalidades centrais:
