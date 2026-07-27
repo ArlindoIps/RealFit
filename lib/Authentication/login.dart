@@ -174,6 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
               _buildActionButton(
                 label: 'Registar',
                 onPressed: () {
+
                 Navigator.push(
                         context,
                         MaterialPageRoute(

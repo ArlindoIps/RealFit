@@ -124,6 +124,69 @@ class DatabaseService {
     if (!snapshot.exists) return null;
     return Map<String, dynamic>.from(snapshot.value as Map);
   }
+
+  /// Grava um treino iniciado no histórico do utilizador
+  Future<void> salvarTreinoNoHistorico(String uid, String nome, String duracao, String intensidade) async {
+    // O .push() cria um ID único e aleatório para este treino específico
+    final novoTreinoRef = _usersRef.child(uid).child('historico').push();
+    
+    final dataAtual = "${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}";
+
+    await novoTreinoRef.set({
+      'nome': nome,
+      'duracao': duracao,
+      'intensidade': intensidade,
+      'data': dataAtual,
+      // Guardamos também um timestamp real do servidor para conseguirmos ordenar do mais recente para o mais antigo depois
+      'timestamp': ServerValue.timestamp, 
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> lerHistoricoTreinos(String uid) {
+    return _usersRef.child(uid).child('historico').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return []; 
+
+      List<Map<String, dynamic>> listaHistorico = [];
+      data.forEach((key, value) {
+        listaHistorico.add(Map<String, dynamic>.from(value as Map));
+      });
+
+      
+      listaHistorico.sort((a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
+      
+      return listaHistorico;
+    });
+  }
+
+  Future<void> salvarTreinoDescarregado(String uid, String nome, String tamanho) async {
+    final novoDownloadRef = _usersRef.child(uid).child('descarregados').push();
+    
+    final dataAtual = "${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}";
+
+    await novoDownloadRef.set({
+      'nome': nome,
+      'tamanho': tamanho, 
+      'data': dataAtual,
+      'timestamp': ServerValue.timestamp,
+    });
+  }
+
+  
+  Stream<List<Map<String, dynamic>>> lerTreinosDescarregados(String uid) {
+    return _usersRef.child(uid).child('descarregados').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return [];
+
+      List<Map<String, dynamic>> listaDescarregados = [];
+      data.forEach((key, value) {
+        listaDescarregados.add(Map<String, dynamic>.from(value as Map));
+      });
+
+      listaDescarregados.sort((a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
+      return listaDescarregados;
+    });
+  }
 }
 
 /// Perguntas fixas do ecrã "Capacidade física do user".
