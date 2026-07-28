@@ -15,7 +15,7 @@ O **RealFit** é uma aplicação móvel interativa e empática de fitness, desen
 ---
 
 ## 🔗 Links Importantes
-* **Vídeo de Demonstração:** [Inserir Link do YouTube/Drive aqui]
+* **Vídeo de Demonstração:** https://ipsetubal-my.sharepoint.com/:v:/g/personal/2024147788_estudantes_ips_pt/IQC4KCXY1qTZQpk3qs7eDSaJAYp8z35nAxnTL7KIjKAcFi0?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=IkVlZ2
 * **Design, Mockups e Esquema de Navegação (Figma):** https://www.figma.com/design/gT1butpAWxAtIuBwRnREy5/IPM_MediaFidelidade?node-id=0-1&t=DwX9caQGXCHertks-1
 
 ---
