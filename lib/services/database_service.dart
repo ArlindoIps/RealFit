@@ -187,6 +187,63 @@ class DatabaseService {
       return listaDescarregados;
     });
   }
+  Future<void> notificarAmigosTreinoConcluido(String meuUid, String meuNome, String nomeTreino) async {
+    
+    final amigosSnapshot = await _usersRef.child(meuUid).child('amigos').get();
+    
+    if (amigosSnapshot.exists) {
+      final amigosMap = amigosSnapshot.value as Map<dynamic, dynamic>;
+      final dataAtual = "${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}";
+      
+      amigosMap.forEach((amigoUid, _) async {
+        await _usersRef.child(amigoUid.toString()).child('notificacoes').push().set({
+          'titulo': 'Treino Concluído! 🔥',
+          'mensagem': '$meuNome acabou de completar o treino: $nomeTreino. Envia-lhe os parabéns!',
+          'data': dataAtual,
+          'timestamp': ServerValue.timestamp,
+        });
+      });
+    }
+  }
+
+  /// Ouve as notificações do utilizador em tempo real
+  Stream<List<Map<String, dynamic>>> lerNotificacoes(String uid) {
+    return _usersRef.child(uid).child('notificacoes').onValue.map((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return [];
+
+      List<Map<String, dynamic>> listaNotificacoes = [];
+      data.forEach((key, value) {
+        listaNotificacoes.add(Map<String, dynamic>.from(value as Map));
+      });
+
+      // Ordena da mais recente para a mais antiga
+      listaNotificacoes.sort((a, b) => (b['timestamp'] ?? 0).compareTo(a['timestamp'] ?? 0));
+      return listaNotificacoes;
+    });
+  }
+  /// Pesquisa um utilizador pelo email exato
+  Future<UserProfile?> searchUserByEmail(String email) async {
+    final snapshot = await _usersRef.get();
+    if (!snapshot.exists) return null;
+
+    final data = snapshot.value as Map<dynamic, dynamic>;
+    for (var entry in data.entries) {
+      final userMap = Map<String, dynamic>.from(entry.value as Map);
+      if (userMap['email'] == email) {
+        return UserProfile.fromMap(userMap);
+      }
+    }
+    return null;
+  }
+
+  /// Adiciona o UID de um utilizador à tua lista de amigos
+  Future<void> addFriend(String meuUid, String amigoUid) async {
+    
+    await _usersRef.child(meuUid).child('amigos').child(amigoUid).set(true);
+    // Guarda na pasta do amigo que ele é teu amigo (Amizade mútua instantânea para simplificar)
+    await _usersRef.child(amigoUid).child('amigos').child(meuUid).set(true);
+  }
 }
 
 /// Perguntas fixas do ecrã "Capacidade física do user".

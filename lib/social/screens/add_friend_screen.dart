@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/friend_model.dart';
-import '../services/mock_friend_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
+import '/services/database_service.dart'; 
+// (Se o UserProfile estiver noutro ficheiro, certifica-te que o import está correto. 
+// Normalmente o Luís colocou o UserProfile dentro do database_service.dart)
 
 class AddFriendScreen extends StatefulWidget {
-  // Recebe o service já criado no FriendsScreen (partilha os mesmos dados)
-  final MockFriendService service;
-  const AddFriendScreen({super.key, required this.service});
+  // Já não precisamos do serviço falso do Caram aqui!
+  const AddFriendScreen({super.key});
 
   @override
   State<AddFriendScreen> createState() => _AddFriendScreenState();
@@ -14,17 +16,18 @@ class AddFriendScreen extends StatefulWidget {
 class _AddFriendScreenState extends State<AddFriendScreen> {
   final TextEditingController _emailCtrl = TextEditingController();
 
-  // Estado deste ecrã
-  bool _isSearching = false; // true enquanto pesquisa
-  bool _isAdding = false; // true enquanto adiciona
-  FriendModel? _result; // utilizador encontrado
-  bool _alreadyFriend = false; // já é amigo?
-  bool _isMe = false; // é o próprio utilizador?
-  String? _error; // mensagem de erro
+  bool _isSearching = false; 
+  bool _isAdding = false; 
+  
+  // Agora usamos o perfil real que o Luís criou
+  UserProfile? _result; 
+  
+  bool _alreadyFriend = false; 
+  String? _error; 
 
   @override
   void dispose() {
-    _emailCtrl.dispose(); // liberta o controller quando o ecrã é destruído
+    _emailCtrl.dispose(); 
     super.dispose();
   }
 
@@ -32,17 +35,20 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
     final email = _emailCtrl.text.trim();
     if (email.isEmpty) return;
 
-    // Limpa estado anterior e activa o loading
     setState(() {
       _isSearching = true;
       _result = null;
       _error = null;
       _alreadyFriend = false;
-      _isMe = false;
     });
 
     try {
-      final found = await widget.service.searchUserByEmail(email);
+      final meuUid = FirebaseAuth.instance.currentUser?.uid;
+      if (meuUid == null) throw Exception("Utilizador não autenticado");
+
+      // 1. Pesquisa na base de dados real
+      final found = await DatabaseService().searchUserByEmail(email);
+      
       if (found == null) {
         setState(() {
           _error = 'Nenhum utilizador encontrado com este email.';
@@ -50,24 +56,33 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         });
         return;
       }
-      // Verifica se é o próprio utilizador
-      if (found.uid == widget.service.myUid) {
+      
+      // 2. Verifica se é o próprio utilizador
+      if (found.uid == meuUid) {
         setState(() {
           _error = 'Não podes adicionar-te a ti mesmo! 😄';
           _isSearching = false;
         });
         return;
       }
-      // Verifica se já é amigo
-      final already = await widget.service.isFriend(found.uid);
+      
+      // 3. Verifica rapidamente se já são amigos na Realtime Database
+      final friendSnapshot = await FirebaseDatabase.instance.ref()
+          .child('users')
+          .child(meuUid)
+          .child('amigos')
+          .child(found.uid)
+          .get();
+
       setState(() {
         _result = found;
-        _alreadyFriend = already;
+        _alreadyFriend = friendSnapshot.exists;
         _isSearching = false;
       });
     } catch (e) {
+      print("ERRO REAL: $e"); // Isto vai aparecer no terminal
       setState(() {
-        _error = 'Erro ao pesquisar. Verifica a ligação.';
+        _error = 'Erro: $e'; // Isto vai mostrar o erro de código diretamente no ecrã da App!
         _isSearching = false;
       });
     }
@@ -76,8 +91,14 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
   Future<void> _addFriend() async {
     if (_result == null) return;
     setState(() => _isAdding = true);
+    
     try {
-      await widget.service.addFriend(_result!);
+      final meuUid = FirebaseAuth.instance.currentUser?.uid;
+      if (meuUid != null) {
+        // Guarda na base de dados de verdade!
+        await DatabaseService().addFriend(meuUid, _result!.uid);
+      }
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -86,7 +107,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-        Navigator.pop(context); // volta ao ecrã anterior
+        Navigator.pop(context); 
       }
     } catch (_) {
       setState(() => _isAdding = false);
@@ -100,10 +121,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
       appBar: AppBar(
         title: const Text(
           'Adicionar Amigo',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A2E),
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E)),
         ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF1A1A2E),
@@ -114,18 +132,18 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Instrução
             const Text(
               'Pesquisa um amigo pelo seu endereço de email:',
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 16),
+            
             // Campo de email
             TextField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _search(), // pesquisa ao premir Enter
+              onSubmitted: (_) => _search(), 
               decoration: InputDecoration(
                 hintText: 'email@exemplo.com',
                 prefixIcon: const Icon(Icons.email_outlined),
@@ -151,6 +169,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 12),
+            
             // Botão pesquisar
             ElevatedButton.icon(
               onPressed: _isSearching ? null : _search,
@@ -158,18 +177,12 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 backgroundColor: const Color(0xFF00B4C8),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               icon: _isSearching
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : const Icon(Icons.search),
               label: Text(_isSearching ? 'A pesquisar...' : 'Pesquisar'),
@@ -189,10 +202,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                     const Icon(Icons.info_outline, color: Color(0xFFB71C1C)),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text(
-                        _error!,
-                        style: const TextStyle(color: Color(0xFFB71C1C)),
-                      ),
+                      child: Text(_error!, style: const TextStyle(color: Color(0xFFB71C1C))),
                     ),
                   ],
                 ),
@@ -202,9 +212,7 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
             if (_result != null) ...[
               Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 color: Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(20),
@@ -214,70 +222,30 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                         radius: 40,
                         backgroundColor: const Color(0xFF00B4C8),
                         child: Text(
-                          _result!.name[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 32,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          _result!.name.isNotEmpty ? _result!.name[0].toUpperCase() : '?',
+                          style: const TextStyle(fontSize: 32, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                       const SizedBox(height: 12),
                       Text(
                         _result!.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       Text(
                         _result!.email,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.local_fire_department,
-                            color: Colors.orange,
-                            size: 18,
-                          ),
-                          Text(
-                            ' ${_result!.streak} dias  ',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          const Icon(
-                            Icons.fitness_center,
-                            color: Colors.grey,
-                            size: 18,
-                          ),
-                          Text(
-                            ' ${_result!.totalWorkouts} treinos',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                        ],
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
                       ),
                       const SizedBox(height: 16),
                       if (_alreadyFriend)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE8F5E9),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
                             'Já são amigos ✓',
-                            style: TextStyle(
-                              color: Color(0xFF2E7D32),
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
                           ),
                         )
                       else
@@ -288,24 +256,16 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF00B4C8),
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
                             icon: _isAdding
                                 ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
+                                    width: 18, height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : const Icon(Icons.person_add),
-                            label: Text(
-                              _isAdding ? 'A adicionar...' : 'Adicionar Amigo',
-                            ),
+                            label: Text(_isAdding ? 'A adicionar...' : 'Adicionar Amigo'),
                           ),
                         ),
                     ],
@@ -313,32 +273,6 @@ class _AddFriendScreenState extends State<AddFriendScreen> {
                 ),
               ),
             ],
-
-            // Dica de emails para testar
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0F7FA),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Emails de teste:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Color(0xFF006064),
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text('david@realfit.com', style: TextStyle(fontSize: 12)),
-                  Text('maria@email.com', style: TextStyle(fontSize: 12)),
-                ],
-              ),
-            ),
           ],
         ),
       ),

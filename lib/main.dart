@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'Authentication/auth_gate.dart';
-
+import 'social/screens/friends_screen.dart';
 
 import 'treinos/treinos_screen.dart';
 
@@ -69,7 +69,7 @@ class _MainNavegacaoState extends State<MainNavegacao> {
     final List<Widget> ecras = [
       DiarioScreen(onTreinoGerado: _mudarParaTreinos), // Aba 0
       TreinosScreen(exerciciosGerados: _exerciciosGlobais), // Aba 1
-      const AmigosScreen(),  // Aba 2
+      FriendsScreen(),  // Aba 2
       const ProfileScreen()
     ];
 

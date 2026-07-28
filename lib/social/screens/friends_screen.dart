@@ -4,6 +4,8 @@ import '../models/achievement_model.dart';
 import '../services/mock_friend_service.dart';
 import 'add_friend_screen.dart';
 import 'friend_profile_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '/services/database_service.dart';
 
 // StatefulWidget porque tem estado interno (o TabController e os dados)
 class FriendsScreen extends StatefulWidget {
@@ -91,7 +93,7 @@ class _FriendsScreenState extends State<FriendsScreen>
           indicatorWeight: 3,
           tabs: const [
             Tab(text: 'Amigos'),
-            Tab(text: 'Conquistas'),
+            Tab(text: 'Notificações'),
           ],
         ),
         // Botão "+" no canto direito para adicionar amigo
@@ -108,7 +110,7 @@ class _FriendsScreenState extends State<FriendsScreen>
               await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AddFriendScreen(service: _service),
+                  builder: (_) => AddFriendScreen(),
                 ),
               );
               // Quando volta, recarrega a lista de amigos
@@ -122,7 +124,7 @@ class _FriendsScreenState extends State<FriendsScreen>
         controller: _tabController,
         children: [
           _buildFriendsTab(), // Aba 0 — lista de amigos
-          _buildAchievementsTab(), // Aba 1 — feed de conquistas
+          _buildNotificacoesTab(), // Aba 1 — feed de conquistas
         ],
       ),
     );
@@ -184,41 +186,85 @@ class _FriendsScreenState extends State<FriendsScreen>
   }
 
   // ─────────────── ABA 2: FEED DE CONQUISTAS ────────────────────
-  Widget _buildAchievementsTab() {
-    if (_loadingAchievements) {
-      return const Center(child: CircularProgressIndicator());
+  Widget _buildNotificacoesTab() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      return const Center(child: Text("Faz login para veres as notificações."));
     }
-    if (_achievements.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.emoji_events_outlined, size: 72, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'As conquistas dos teus amigos',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: DatabaseService().lerNotificacoes(uid),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF00B4C8)));
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.notifications_off_outlined, size: 72, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'Ainda não tens notificações.',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+                Text('Quando os teus amigos treinarem, aparece aqui!', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ],
             ),
-            Text('aparecem aqui.', style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      );
-    }
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: _achievements.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, index) {
-          return _AchievementCard(
-            achievement: _achievements[index],
-            service: _service,
-            // Quando o utilizador envia força, recarrega o feed
-            onKudosSent: _loadData,
           );
-        },
-      ),
+        }
+
+        final notificacoes = snapshot.data!;
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: notificacoes.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final notif = notificacoes[index];
+            return Card(
+              elevation: 1,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              color: Colors.white,
+              child: ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0F7FA),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(child: Text('🔥', style: TextStyle(fontSize: 24))),
+                ),
+                title: Text(
+                  notif['titulo'] ?? 'Notificação',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    Text(notif['mensagem'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                    const SizedBox(height: 6),
+                    Text(notif['data'] ?? '', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                  ],
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.favorite_border, color: Colors.grey),
+                  onPressed: () {
+                    // Futuro: Lógica para enviar like de volta
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Força enviada ao teu amigo! 💪')),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

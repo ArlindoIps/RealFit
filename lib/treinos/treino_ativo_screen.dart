@@ -43,17 +43,33 @@ class _TreinoAtivoScreenState extends State<TreinoAtivoScreen> {
   /// Quando o último exercício é concluído,
   /// navega automaticamente para o ecrã de conclusão
   /// do treino.
-  void _proximoExercicio() {
+void _proximoExercicio() async { 
     if (_exercicioAtual < widget.exercicios.length - 1) {
       setState(() {
         _exercicioAtual++;
       });
     } else {
-      // Se for o último exercício, vai para o ecrã de Parabéns
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const TreinoConcluidoScreen()),
-      );
+      
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      
+      final meuNome = "O teu amigo"; 
+
+      if (uid != null) {
+        
+        await DatabaseService().notificarAmigosTreinoConcluido(
+          uid, 
+          meuNome, 
+          "Treino de Hoje"
+        );
+      }
+
+      // 3. Ir para o ecrã de Parabéns
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const TreinoConcluidoScreen()),
+        );
+      }
     }
   }
 
